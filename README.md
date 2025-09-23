@@ -1,19 +1,29 @@
-# HProject with MongoDB, CSV Import, and VectorDB (Chroma)
+his project is a Retrieval-Augmented Generation (RAG) application built with LangChain, ChromaDB, and Groq API. It enables natural language querying over an employee dataset (~3000 records) and returns accurate, context-aware responses.
 
-This project demonstrates how to:
-1. Connect to a **MongoDB Atlas cluster**.
-2. Import employee data from a CSV file into a collection.
-3. Create a **Vector Database using Chroma** for information retrieval (RAG).
-4. Add a **Users collection** with login credentials.
+Features
 
----
+Employee Knowledgebase – Upload & query ~3000 employee records.
 
-## 🚀 Features
-- Uploads `employee_data.csv` into MongoDB (`employees` collection).
-- Preprocesses data (handles NaN/NaT values).
-- Creates a **vector store** from employee data using `chromadb` + embeddings.
-- Adds authentication (`users` collection with username/password).
+LangChain Integration – Handles retrieval + LLM pipeline.
 
----
+ChromaDB Vector Store – Efficient storage and retrieval of embeddings.
 
-## 📂 Project Structure
+Groq API (LLM) – Fast and reliable text generation.
+
+Flask Backend – Simple API server to interact with the RAG pipeline.
+
+Session Memory – Keeps conversation flow natural.
+
+Tech Stack
+
+Backend: Flask (Python)
+
+Vector DB: ChromaDB
+
+LLM: Groq API
+
+LangChain: Orchestrates RAG pipeline
+
+Embedding Model: sentence-transformers/all-MiniLM-L6-v2 (or any other)
+
+Dataset: Employee dataset (3000 entries)
