@@ -1,8 +1,8 @@
-RAG Employee Knowledgebase Chatbot
+**RAG Employee Knowledgebase Chatbot**
 
 This project is a Retrieval-Augmented Generation (RAG) application built with LangChain, ChromaDB, and Groq API. It enables natural language querying over an employee dataset (~3000 records) and returns accurate, context-aware responses.
 
-Features
+**Features**
 
 Employee Knowledgebase – Upload & query ~3000 employee records.
 
@@ -16,7 +16,7 @@ Flask Backend – Simple API server to interact with the RAG pipeline.
 
 Session Memory – Keeps conversation flow natural.
 
-Tech Stack
+**Tech Stack**
 
 Backend: Flask (Python)
 
