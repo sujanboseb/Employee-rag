@@ -1,4 +1,6 @@
-his project is a Retrieval-Augmented Generation (RAG) application built with LangChain, ChromaDB, and Groq API. It enables natural language querying over an employee dataset (~3000 records) and returns accurate, context-aware responses.
+RAG Employee Knowledgebase Chatbot
+
+This project is a Retrieval-Augmented Generation (RAG) application built with LangChain, ChromaDB, and Groq API. It enables natural language querying over an employee dataset (~3000 records) and returns accurate, context-aware responses.
 
 Features
 
