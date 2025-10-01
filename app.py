@@ -8,7 +8,6 @@ import secrets
 import os
 from dotenv import load_dotenv
 
-# LangChain imports
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -24,7 +23,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', secrets.token_hex(16))
 
-# ===== MongoDB Setup =====
 try:
     raw_password = os.getenv('MONGODB_PASSWORD')
     encoded_password = quote_plus(raw_password)
@@ -39,21 +37,17 @@ try:
     mongo_client.admin.command('ping')
     print("MongoDB connected successfully")
     
-    # Check if users exist, if not create sample users
-    if users_collection.count_documents({}) == 0:
-        sample_users = [
-            {"username": "sujan", "password": "bose"},
-            {"username": "admin", "password": "admin123"},
-            {"username": "demo", "password": "demo"}
-        ]
-        users_collection.insert_many(sample_users)
-        print("Sample users created in MongoDB")
+    # Check if users collection exists and has users
+    user_count = users_collection.count_documents({})
+    print(f"Found {user_count} users in the database")
+    
+    if user_count == 0:
+        print("WARNING: No users found in database. Please add users to MongoDB first.")
     
 except Exception as e:
     print(f"MongoDB setup error: {e}")
     users_collection = None
 
-# ===== ChromaDB Setup =====
 try:
     chroma_client = chromadb.PersistentClient(path="./chromadb")
     collection_chroma = chroma_client.get_or_create_collection(
@@ -67,7 +61,7 @@ except Exception as e:
     print(f"ChromaDB setup error: {e}")
     collection_chroma = None
 
-# ===== Groq Setup =====
+
 try:
     groq_api_key = os.getenv('GROQ_API_KEY')
     client_groq = Groq(api_key=groq_api_key)
@@ -76,7 +70,7 @@ except Exception as e:
     print(f"Groq setup error: {e}")
     client_groq = None
 
-# ===== LangChain Setup =====
+
 try:
     groq_api_key = os.getenv('GROQ_API_KEY')
     
@@ -115,7 +109,6 @@ except Exception as e:
     embeddings = None
     PROMPT = None
 
-# ===== Authentication Functions =====
 def authenticate_user(username, password):
     """Authenticate user against MongoDB"""
     if not users_collection:
@@ -281,8 +274,4 @@ ANSWER:"""
         return error_msg
 
 if __name__ == '__main__':
-    print("Starting RAG Chatbot with MongoDB and LangChain...")
-    print("Go to: http://localhost:5000")
-    print("Login with users from MongoDB")
-    print("Install required packages: pip install langchain langchain-groq sentence-transformers")
     app.run(debug=True, host='0.0.0.0', port=5000)
