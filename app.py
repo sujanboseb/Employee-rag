@@ -127,9 +127,16 @@ def get_chat_messages():
         session['chat_messages'] = []
     return session['chat_messages']
 
-def add_message(message, is_user=True):
+def add_message(message, is_user=True, sources=None):
+    """Add message with optional source citations"""
     messages = get_chat_messages()
-    messages.append({'text': message, 'is_user': is_user})
+    message_data = {
+        'text': message, 
+        'is_user': is_user
+    }
+    if sources and not is_user:
+        message_data['sources'] = sources
+    messages.append(message_data)
     session['chat_messages'] = messages
 
 @app.route('/')
@@ -167,8 +174,8 @@ def chatbot():
         user_query = request.form.get('query', '').strip()
         if user_query:
             add_message(user_query, is_user=True)
-            bot_response = rag_query_langchain(user_query)
-            add_message(bot_response, is_user=False)
+            bot_response, sources = rag_query_langchain(user_query)
+            add_message(bot_response, is_user=False, sources=sources)
     
     messages = get_chat_messages()
     return render_template('chatbot.html', username=session['username'], messages=messages)
@@ -181,18 +188,18 @@ def quick_query():
     query = request.args.get('q', '').strip()
     if query:
         add_message(query, is_user=True)
-        bot_response = rag_query_langchain(query)
-        add_message(bot_response, is_user=False)
+        bot_response, sources = rag_query_langchain(query)
+        add_message(bot_response, is_user=False, sources=sources)
     
     return redirect(url_for('chatbot'))
 
 def rag_query_langchain(user_query, top_k=3):
-    """Perform RAG query using ChromaDB and LangChain"""
+    """Perform RAG query using ChromaDB and LangChain with explainability"""
     if not collection_chroma:
-        return "ChromaDB is not available. Please check the database setup."
+        return "ChromaDB is not available. Please check the database setup.", None
     
     if not langchain_llm:
-        return "LangChain LLM is not available. Please check your API key."
+        return "LangChain LLM is not available. Please check your API key.", None
     
     try:
         print(f"Processing query with LangChain: {user_query}")
@@ -203,9 +210,25 @@ def rag_query_langchain(user_query, top_k=3):
         )
         
         if not results["documents"] or not results["documents"][0]:
-            return "No relevant information found in the database for your query."
+            return "No relevant information found in the database for your query.", None
         
         retrieved_docs = results["documents"][0]
+        metadatas = results.get("metadatas", [[]])[0] if results.get("metadatas") else []
+        distances = results.get("distances", [[]])[0] if results.get("distances") else []
+        ids = results.get("ids", [[]])[0] if results.get("ids") else []
+        
+        # Prepare source information for explainability
+        sources = []
+        for i, doc in enumerate(retrieved_docs):
+            source_info = {
+                "id": ids[i] if i < len(ids) else f"doc_{i+1}",
+                "content": doc[:200] + "..." if len(doc) > 200 else doc,  # Truncate for display
+                "full_content": doc,
+                "similarity_score": round(1 - distances[i], 3) if i < len(distances) else None,
+                "metadata": metadatas[i] if i < len(metadatas) else {}
+            }
+            sources.append(source_info)
+        
         context_text = "\n".join(retrieved_docs)
         
         print(f"Found {len(retrieved_docs)} relevant documents")
@@ -219,7 +242,7 @@ def rag_query_langchain(user_query, top_k=3):
             response_text = str(response)
         
         print("Generated response successfully with LangChain")
-        return response_text
+        return response_text, sources
     
     except Exception as e:
         error_msg = f"Error processing query with LangChain: {str(e)}"
@@ -227,9 +250,9 @@ def rag_query_langchain(user_query, top_k=3):
         return rag_query_fallback(user_query, top_k)
 
 def rag_query_fallback(user_query, top_k=3):
-    """Fallback RAG query using direct Groq API"""
+    """Fallback RAG query using direct Groq API with explainability"""
     if not client_groq:
-        return "Both LangChain and Groq client are not available."
+        return "Both LangChain and Groq client are not available.", None
     
     try:
         print(f"Using fallback Groq API for: {user_query}")
@@ -240,9 +263,25 @@ def rag_query_fallback(user_query, top_k=3):
         )
         
         if not results["documents"] or not results["documents"][0]:
-            return "No relevant information found in the database."
+            return "No relevant information found in the database.", None
         
         retrieved_docs = results["documents"][0]
+        metadatas = results.get("metadatas", [[]])[0] if results.get("metadatas") else []
+        distances = results.get("distances", [[]])[0] if results.get("distances") else []
+        ids = results.get("ids", [[]])[0] if results.get("ids") else []
+        
+        # Prepare source information
+        sources = []
+        for i, doc in enumerate(retrieved_docs):
+            source_info = {
+                "id": ids[i] if i < len(ids) else f"doc_{i+1}",
+                "content": doc[:200] + "..." if len(doc) > 200 else doc,
+                "full_content": doc,
+                "similarity_score": round(1 - distances[i], 3) if i < len(distances) else None,
+                "metadata": metadatas[i] if i < len(metadatas) else {}
+            }
+            sources.append(source_info)
+        
         context_text = "\n".join(retrieved_docs)
         
         prompt = f"""You are a helpful AI assistant for employee information queries. 
@@ -266,12 +305,12 @@ ANSWER:"""
         
         response = completion.choices[0].message.content
         print("Generated response successfully with fallback")
-        return response
+        return response, sources
     
     except Exception as e:
         error_msg = f"Error in fallback query: {str(e)}"
         print(error_msg)
-        return error_msg
+        return error_msg, None
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
