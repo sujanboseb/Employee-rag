@@ -3,286 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG Chatbot</title>
+    <title>Employee Information Chatbot</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        * {
             margin: 0;
-            height: 100vh;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
         
         .header {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
         .header h1 {
-            margin: 0;
-            font-size: 1.5em;
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .username {
+            color: #333;
+            font-weight: 500;
         }
         
         .logout-btn {
-            background: rgba(255,255,255,0.2);
+            background: #dc3545;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
             cursor: pointer;
             text-decoration: none;
+            transition: background 0.3s;
         }
         
         .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
+            background: #c82333;
         }
         
         .chat-container {
             flex: 1;
+            max-width: 1000px;
+            width: 100%;
+            margin: 2rem auto;
             background: white;
-            margin: 20px;
             border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
         
-        .chat-messages {
+        .messages-area {
             flex: 1;
-            padding: 20px;
+            padding: 2rem;
             overflow-y: auto;
-            background: #f9f9f9;
+            max-height: 60vh;
         }
         
         .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 15px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message.user {
+            align-items: flex-end;
+        }
+        
+        .message.bot {
+            align-items: flex-start;
+        }
+        
+        .message-bubble {
             max-width: 70%;
+            padding: 1rem 1.5rem;
+            border-radius: 15px;
             word-wrap: break-word;
         }
         
-        .user-message {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .message.user .message-bubble {
+            background: #667eea;
             color: white;
-            margin-left: auto;
-            text-align: right;
+            border-bottom-right-radius: 5px;
         }
         
-        .bot-message {
-            background: white;
+        .message.bot .message-bubble {
+            background: #f1f3f5;
             color: #333;
-            border: 1px solid #ddd;
-            margin-right: auto;
+            border-bottom-left-radius: 5px;
         }
         
-        .chat-input {
+        .sources-container {
+            max-width: 70%;
+            margin-top: 0.75rem;
+            background: #fff9e6;
+            border: 1px solid #ffe066;
+            border-radius: 8px;
+            padding: 0.75rem;
+        }
+        
+        .sources-header {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
             display: flex;
-            padding: 20px;
-            border-top: 1px solid #ddd;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .sources-header::before {
+            content: "📚";
+        }
+        
+        .source-item {
             background: white;
+            border: 1px solid #ffd43b;
+            border-radius: 5px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
         }
         
-        #messageInput {
+        .source-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .source-id {
+            color: #667eea;
+            font-size: 0.75rem;
+        }
+        
+        .similarity-score {
+            background: #667eea;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        
+        .source-content {
+            color: #495057;
+            line-height: 1.5;
+            font-style: italic;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .expand-btn {
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-decoration: underline;
+        }
+        
+        .expand-btn:hover {
+            color: #764ba2;
+        }
+        
+        .full-content {
+            display: none;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #e9ecef;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+        
+        .full-content.expanded {
+            display: block;
+        }
+        
+        .input-area {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .input-form {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .query-input {
             flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 1rem;
+            border: 2px solid #dee2e6;
             border-radius: 25px;
-            font-size: 16px;
-            margin-right: 10px;
+            font-size: 1rem;
             outline: none;
+            transition: border-color 0.3s;
         }
         
-        #messageInput:focus {
+        .query-input:focus {
             border-color: #667eea;
         }
         
-        #sendBtn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .send-btn {
+            background: #667eea;
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 1rem 2rem;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 16px;
-            min-width: 80px;
+            font-weight: 600;
+            transition: background 0.3s;
         }
         
-        #sendBtn:hover {
-            transform: translateY(-1px);
+        .send-btn:hover {
+            background: #764ba2;
         }
         
-        #sendBtn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .welcome {
-            text-align: center;
-            color: #666;
-            margin: 50px 0;
-        }
-        
-        .quick-questions {
+        .quick-queries {
+            padding: 0 1.5rem 1rem;
+            background: #f8f9fa;
             display: flex;
+            gap: 0.5rem;
             flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
         }
         
-        .quick-btn {
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            color: #1976d2;
-            padding: 8px 16px;
-            border-radius: 20px;
+        .quick-query-btn {
+            background: white;
+            border: 1px solid #dee2e6;
+            padding: 0.5rem 1rem;
+            border-radius: 15px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #495057;
         }
         
-        .quick-btn:hover {
-            background: #bbdefb;
+        .quick-query-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
         
-        .typing {
-            font-style: italic;
-            color: #666;
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state h2 {
+            margin-bottom: 1rem;
+            color: #495057;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>🤖 RAG Chatbot - Welcome {{ username }}</h1>
-        <a href="/logout" class="logout-btn">Logout</a>
+        <h1>🏥 Employee Information Assistant</h1>
+        <div class="user-info">
+            <span class="username">👤 {{ username }}</span>
+            <a href="/logout" class="logout-btn">Logout</a>
+        </div>
     </div>
     
     <div class="chat-container">
-        <div class="chat-messages" id="chatMessages">
-            <div class="welcome">
-                <h2>👋 Welcome to Employee Assistant!</h2>
-                <p>Ask me about employee data, departments, or company information.</p>
-                
-                <div class="quick-questions">
-                    <button class="quick-btn" onclick="sendQuickQuestion('Find employees working in IT department')">
-                        IT Employees
-                    </button>
-                    <button class="quick-btn" onclick="sendQuickQuestion('Show me all managers')">
-                        All Managers  
-                    </button>
-                    <button class="quick-btn" onclick="sendQuickQuestion('What departments do we have?')">
-                        Departments
-                    </button>
-                    <button class="quick-btn" onclick="sendQuickQuestion('Find highest paid employees')">
-                        Top Salaries
-                    </button>
+        <div class="messages-area" id="messagesArea">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message {% if message.is_user %}user{% else %}bot{% endif %}">
+                        <div class="message-bubble">
+                            {{ message.text }}
+                        </div>
+                        
+                        {% if not message.is_user and message.sources %}
+                        <div class="sources-container">
+                            <div class="sources-header">
+                                Sources Used ({{ message.sources|length }})
+                            </div>
+                            {% for source in message.sources %}
+                            <div class="source-item">
+                                <div class="source-header">
+                                    <span class="source-id">Source {{ loop.index }}</span>
+                                    {% if source.similarity_score %}
+                                    <span class="similarity-score">
+                                        Relevance: {{ (source.similarity_score * 100)|round }}%
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="source-content">
+                                    "{{ source.content }}"
+                                </div>
+                                <div class="expand-btn" onclick="toggleSource(this)">
+                                    Show full content ▼
+                                </div>
+                                <div class="full-content">
+                                    {{ source.full_content }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h2>👋 Welcome to the Employee Information Assistant!</h2>
+                    <p>Ask me anything about employees. I'll provide answers with source citations.</p>
                 </div>
-            </div>
+            {% endif %}
         </div>
         
-        <div class="chat-input">
-            <input type="text" id="messageInput" placeholder="Ask me about employees, departments, salaries..." />
-            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        <div class="quick-queries">
+            <a href="/quick_query?q=Tell me about employee benefits" class="quick-query-btn">Employee Benefits</a>
+            <a href="/quick_query?q=What are the working hours?" class="quick-query-btn">Working Hours</a>
+            <a href="/quick_query?q=How to request leave?" class="quick-query-btn">Leave Policy</a>
+        </div>
+        
+        <div class="input-area">
+            <form method="POST" class="input-form" onsubmit="return handleSubmit()">
+                <input 
+                    type="text" 
+                    name="query" 
+                    class="query-input" 
+                    placeholder="Ask a question about employees..."
+                    required
+                    autocomplete="off"
+                >
+                <button type="submit" class="send-btn">Send ✈️</button>
+            </form>
         </div>
     </div>
-
+    
     <script>
-        const chatMessages = document.getElementById('chatMessages');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-
-        function addMessage(message, isUser) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            messageDiv.textContent = message;
-            
-            // Remove welcome message if it exists
-            const welcome = chatMessages.querySelector('.welcome');
-            if (welcome) {
-                welcome.remove();
-            }
-            
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        function scrollToBottom() {
+            const messagesArea = document.getElementById('messagesArea');
+            messagesArea.scrollTop = messagesArea.scrollHeight;
         }
-
-        function setLoading(loading) {
-            sendBtn.disabled = loading;
-            sendBtn.textContent = loading ? 'Sending...' : 'Send';
+        
+        function handleSubmit() {
+            setTimeout(scrollToBottom, 100);
+            return true;
         }
-
-        async function sendMessage(message = null) {
-            const query = message || messageInput.value.trim();
-            if (!query) return;
+        
+        function toggleSource(btn) {
+            const fullContent = btn.nextElementSibling;
+            fullContent.classList.toggle('expanded');
             
-            // Clear input if not from quick question
-            if (!message) {
-                messageInput.value = '';
-            }
-            
-            // Add user message
-            addMessage(query, true);
-            
-            // Show loading
-            setLoading(true);
-            addMessage('Thinking...', false);
-            
-            try {
-                const formData = new FormData();
-                formData.append('query', query);
-                
-                const response = await fetch('/query', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                // Remove "Thinking..." message
-                const messages = chatMessages.querySelectorAll('.message');
-                const lastMessage = messages[messages.length - 1];
-                if (lastMessage && lastMessage.textContent === 'Thinking...') {
-                    lastMessage.remove();
-                }
-                
-                if (data.response) {
-                    addMessage(data.response, false);
-                } else {
-                    addMessage('Sorry, I encountered an error.', false);
-                }
-            } catch (error) {
-                // Remove "Thinking..." message
-                const messages = chatMessages.querySelectorAll('.message');
-                const lastMessage = messages[messages.length - 1];
-                if (lastMessage && lastMessage.textContent === 'Thinking...') {
-                    lastMessage.remove();
-                }
-                
-                addMessage('Error: Could not connect to server.', false);
-            } finally {
-                setLoading(false);
+            if (fullContent.classList.contains('expanded')) {
+                btn.textContent = 'Hide full content ▲';
+            } else {
+                btn.textContent = 'Show full content ▼';
             }
         }
-
-        function sendQuickQuestion(question) {
-            sendMessage(question);
-        }
-
-        // Enter key to send
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // Focus on input
-        messageInput.focus();
+        
+        // Scroll to bottom on page load
+        window.onload = scrollToBottom;
     </script>
 </body>
 </html>
