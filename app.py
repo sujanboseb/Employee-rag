@@ -23,9 +23,7 @@ encoded_password = quote_plus(MONGO_PASSWORD)
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")
 
-# ----------------------------
-# MongoDB connection
-# ----------------------------
+
 mongo_client = MongoClient(
     f"mongodb+srv://sujan:{encoded_password}@cluster0.6eacggy.mongodb.net/?retryWrites=true&w=majority"
 )
@@ -84,9 +82,7 @@ Provide a factual and concise answer based only on the sources above. If the sou
         print(f"Error calling Groq API: {e}")
         return f"Sorry, I encountered an error: {str(e)}"
 
-# ----------------------------
-# Flask routes
-# ----------------------------
+
 @app.route("/", methods=["GET"])
 def index():
     return redirect(url_for("login"))
@@ -144,9 +140,7 @@ def chat():
 
     return render_template("chat.html", username=username, messages=messages)
 
-# ----------------------------
-# Quick query route (GET only)
-# ----------------------------
+
 @app.route("/quick_query", methods=["GET"])
 def quick_query():
     if "username" not in session:
@@ -182,3 +176,4 @@ def quick_query():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
